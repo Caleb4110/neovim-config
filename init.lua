@@ -203,6 +203,8 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
+vim.api.nvim_set_keymap('n', '<space>e', '<cmd>lua vim.diagnostic.open_float()<CR>', { noremap = true, silent = true })
+
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
@@ -648,6 +650,12 @@ require('lazy').setup({
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
 
+      -- Setup required for ufo
+      capabilities.textDocument.foldingRange = {
+        dynamicRegistration = false,
+        lineFoldingOnly = true,
+      }
+
       -- Enable the following language servers
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
       --
@@ -661,7 +669,7 @@ require('lazy').setup({
         -- clangd = {},
         -- gopls = {},
         -- pyright = {},
-        -- rust_analyzer = {},
+        rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
         -- Some languages (like typescript) have entire language plugins that can be useful:
@@ -670,7 +678,7 @@ require('lazy').setup({
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         -- ts_ls = {},
         --
-
+        wgsl_analyzer = {},
         lua_ls = {
           -- cmd = { ... },
           -- filetypes = { ... },
@@ -703,6 +711,13 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+<<<<<<< HEAD
+=======
+        'arduino_language_server',
+        'clangd',
+        'rust_analyzer',
+        'wgsl_analyzer',
+>>>>>>> 3357878 (Various additions)
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -762,6 +777,15 @@ require('lazy').setup({
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
+<<<<<<< HEAD
+=======
+        javascript = { 'prettierd', 'prettier', stop_after_first = true },
+        typescript = { 'prettierd', 'prettier', stop_after_first = true },
+        typescriptreact = { 'prettierd' },
+        cpp = { 'clang-format' },
+        arduino_language_server = { 'clang-format' },
+        rust = { 'rustfmt', lsp_format = 'fallback' },
+>>>>>>> 3357878 (Various additions)
       },
     },
   },
@@ -801,12 +825,17 @@ require('lazy').setup({
       --  into multiple repos for maintenance purposes.
       'hrsh7th/cmp-nvim-lsp',
       'hrsh7th/cmp-path',
+<<<<<<< HEAD
       'hrsh7th/cmp-nvim-lsp-signature-help',
+=======
+      'onsails/lspkind.nvim',
+>>>>>>> 3357878 (Various additions)
     },
     config = function()
       -- See `:help cmp`
       local cmp = require 'cmp'
       local luasnip = require 'luasnip'
+      local lspkind = require 'lspkind'
       luasnip.config.setup {}
 
       cmp.setup {
@@ -815,8 +844,41 @@ require('lazy').setup({
             luasnip.lsp_expand(args.body)
           end,
         },
+        window = {
+          completion = {
+            col_offset = -3, -- align the abbr and word on cursor (due to fields order below)
+          },
+        },
         completion = { completeopt = 'menu,menuone,noinsert' },
-
+        formatting = {
+          fields = { 'kind', 'abbr', 'menu' },
+          format = lspkind.cmp_format {
+            mode = 'symbol_text', -- options: 'text', 'text_symbol', 'symbol_text', 'symbol'
+            maxwidth = 50, -- prevent the popup from showing more than provided characters (e.g 50 will not show more than 50 characters)
+            menu = { -- showing type in menu
+              nvim_lsp = '[LSP]',
+              path = '[Path]',
+              buffer = '[Buffer]',
+              luasnip = '[LuaSnip]',
+            },
+            before = function(entry, vim_item)
+              if vim_item.kind == 'Color' and entry.completion_item.documentation then
+                local color = entry.completion_item.documentation:match '#%x%x%x%x%x%x'
+                if color then
+                  local group = 'Tw_' .. color:sub(2) -- Remove the "#" for the group name
+                  if vim.fn.hlID(group) < 1 then
+                    vim.api.nvim_set_hl(0, group, { fg = color })
+                  end
+                  vim_item.kind = '■' -- You can use "⬤" or any icon you like
+                  vim_item.kind_hl_group = group
+                  return vim_item
+                end
+              end
+              vim_item.kind = lspkind.symbolic(vim_item.kind) or vim_item.kind
+              return vim_item
+            end,
+          },
+        },
         -- For an understanding of why these mappings were
         -- chosen, you will need to read `:help ins-completion`
         --
@@ -971,6 +1033,30 @@ require('lazy').setup({
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
+<<<<<<< HEAD
+=======
+  {
+    'pmizio/typescript-tools.nvim',
+    dependencies = { 'nvim-lua/plenary.nvim', 'neovim/nvim-lspconfig' },
+    opts = {},
+    config = function()
+      require('typescript-tools').setup {}
+    end,
+  },
+  {
+    'luckasRanarison/tailwind-tools.nvim',
+    name = 'tailwind-tools',
+    build = ':UpdateRemotePlugins',
+    dependencies = {
+      'nvim-treesitter/nvim-treesitter',
+      'nvim-telescope/telescope.nvim', -- optional
+      'neovim/nvim-lspconfig', -- optional
+    },
+    config = function()
+      require('tailwind-tools').setup {}
+    end,
+  },
+>>>>>>> 3357878 (Various additions)
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
